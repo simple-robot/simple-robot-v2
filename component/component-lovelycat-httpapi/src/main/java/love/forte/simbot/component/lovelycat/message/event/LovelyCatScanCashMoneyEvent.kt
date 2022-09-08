@@ -13,11 +13,9 @@
  */
 
 @file:JvmName("LovelyCatScanCashMoneyEvents")
+
 package love.forte.simbot.component.lovelycat.message.event
 
-import love.forte.common.utils.Millis
-import love.forte.common.utils.timeAs
-import love.forte.common.utils.timeBy
 import love.forte.simbot.api.message.containers.AccountContainer
 import love.forte.simbot.api.message.containers.AccountInfo
 import love.forte.simbot.api.message.containers.BotContainer
@@ -30,7 +28,6 @@ import java.util.concurrent.TimeUnit
 public const val SCAN_CASH_MONEY_EVENT = "EventScanCashMoney"
 
 
-
 /**
  * 面对面收款事件。
  *
@@ -40,18 +37,18 @@ public const val SCAN_CASH_MONEY_EVENT = "EventScanCashMoney"
  * 事件名=EventScanCashMoney
  * @author ForteScarlet
  */
-public interface LovelyCatScanCashMoney: LovelyCatMsg, BotContainer, AccountContainer {
-
-
+public interface LovelyCatScanCashMoney : LovelyCatMsg, BotContainer, AccountContainer {
+    
+    
     /** 收款金额。 */
     val money: String
-
+    
     /** 支付来源账号信息。 */
     val paySourceInfo: ScanCashMoneyPaySourceInfo
-
+    
     /** 支付详细信息。 */
     val payInfo: ScanCashMoneyPayInfo
-
+    
     /**
      * 文本消息即为 [payInfo] 中的 [备注信息][ScanCashMoneyPayInfo.remark]。
      * 可能为null。
@@ -60,12 +57,12 @@ public interface LovelyCatScanCashMoney: LovelyCatMsg, BotContainer, AccountCont
     
     override val text: String?
         get() = payInfo.remark
-
+    
     /** 账号信息等同于 [paySourceInfo]. */
     
     override val accountInfo: AccountInfo
         get() = paySourceInfo
-
+    
 }
 
 /**
@@ -75,14 +72,14 @@ public data class ScanCashMoneyPaySourceInfo(
     /** 消息来源id */
     val payWxid: String,
     /** 消息来源昵称 */
-    val payName: String
-): AccountInfo {
+    val payName: String,
+) : AccountInfo {
     /**
      * 账号
      */
     override val accountCode: String
         get() = payWxid
-
+    
     /**
      * 昵称。
      */
@@ -121,10 +118,10 @@ public data class ScanCashMoneyPayInfo(
     val sceneDesc: String,
     val scene: Int,
     /** 秒值时间戳 */
-    val timestamp: Long
+    val timestamp: Long,
 ) {
     /** 毫秒值时间戳 */
-    val milliTimestamp: Long = timestamp timeBy TimeUnit.SECONDS timeAs Millis
+    val milliTimestamp: Long = TimeUnit.SECONDS.toMillis(timestamp)
 }
 
 
@@ -144,14 +141,14 @@ public class LovelyCatScanCashMoneyEvent(
     override val money: String,
     override val payInfo: ScanCashMoneyPayInfo,
     api: LovelyCatApiTemplate,
-    originalData: String
+    originalData: String,
 ) : BaseLovelyCatMsg(SCAN_CASH_MONEY_EVENT, originalData), LovelyCatScanCashMoney {
-
+    
     /**
      * bot信息
      */
     override val botInfo: BotInfo = lovelyCatBotInfo(robotWxid, api)
-
+    
     /** 支付来源账号信息。 */
     override val paySourceInfo: ScanCashMoneyPaySourceInfo = ScanCashMoneyPaySourceInfo(payWxid, payName)
 }
@@ -159,16 +156,16 @@ public class LovelyCatScanCashMoneyEvent(
 /**
  * [LovelyCatScanCashMoneyEvent] 解析器。
  */
-public object LovelyCatScanCashMoneyEventParser: LovelyCatEventParser {
+public object LovelyCatScanCashMoneyEventParser : LovelyCatEventParser {
     override fun invoke(
         original: String,
         api: LovelyCatApiTemplate,
         jsonSerializerFactory: JsonSerializerFactory,
-        params: Map<String, *>
+        params: Map<String, *>,
     ): LovelyCatScanCashMoney {
-
+        
         val jsonMsg = params.orParamErr("json_msg").toString()
-
+        
         return LovelyCatScanCashMoneyEvent(
             params.orParamErr("robot_wxid").toString(),
             params.orParamErr("pay_wxid").toString(),
@@ -179,6 +176,6 @@ public object LovelyCatScanCashMoneyEventParser: LovelyCatEventParser {
             api, original
         )
     }
-
+    
     override fun type(): Class<out LovelyCatMsg> = LovelyCatScanCashMoney::class.java
 }

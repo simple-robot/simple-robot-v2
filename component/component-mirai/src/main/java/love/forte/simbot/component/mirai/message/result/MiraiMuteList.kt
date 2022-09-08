@@ -14,7 +14,6 @@
 
 package love.forte.simbot.component.mirai.message.result
 
-import love.forte.common.utils.timeBy
 import love.forte.simbot.api.message.assists.Permissions
 import love.forte.simbot.api.message.containers.DetailAccountInfo
 import love.forte.simbot.api.message.containers.Gender
@@ -74,7 +73,7 @@ public class MiraiMuteAccountInfo(member: NormalMember) :
     override val signature: String get() = info.signature
     override val accountTitle: String get() = info.accountTitle
 
-    override val lastTime: Long = (member.muteTimeRemaining timeBy TimeUnit.SECONDS).toMillis()
+    override val lastTime: Long = TimeUnit.SECONDS.toMillis(member.muteTimeRemaining.toLong())
     override val originalData: String = "MiraiMuteInfo(member=$member)"
     override val permission: Permissions = member.toSimbotPermissions()
 }
