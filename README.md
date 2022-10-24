@@ -50,11 +50,10 @@
 
 以及更多高级特性等待你的发现...
 
-<br>
-<br>
-<br>
+## 🎉 V3.0！
 
-3.x版本正在孵化中，有兴趣可参考分支 [v3-dev](https://github.com/ForteScarlet/simpler-robot/tree/v3-dev)
+👉 前往 [Simple Robot v3](https://github.com/simple-robot/simpler-robot) 查看新一代的simbot！🏃‍🏃‍🏃‍🏃‍
+
 
 <br>
 <br>
