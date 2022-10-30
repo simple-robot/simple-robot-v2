@@ -158,34 +158,32 @@ public class MiraiConfiguration {
             } ?: run {
                 // conf.fileBasedDeviceInfo(deviceInfoFile ?: "device.json")
                 conf.deviceInfo = {
-                    conf.deviceInfo = { DeviceInfo.random() }
-                    val devInfo = simbotMiraiDeviceInfo(it.id, deviceInfoSeed)
-                    
-                    if (deviceInfoOutput) {
-                        runCatching<Unit> {
-                            val devInfoJson = json.encodeToString(devInfo)
-                            val outFile = File("simbot-devInfo.json")
-                            if (!outFile.exists()) {
-                                outFile.apply {
-                                    parentFile?.mkdirs()
-                                    createNewFile()
+                    // random.
+                    DeviceInfo.random().also { devInfo ->
+                        if (deviceInfoOutput) {
+                            logger.warn("The configuration property 'deviceInfoOutput' is not recommended")
+                            runCatching<Unit> {
+                                val devInfoJson = json.encodeToString(devInfo)
+                                val outFile = File("simbot-devInfo.json")
+                                if (!outFile.exists()) {
+                                    outFile.apply {
+                                        parentFile?.mkdirs()
+                                        createNewFile()
+                                    }
                                 }
+                                FileWriter(outFile).use { w ->
+                                    w.write(devInfoJson)
+                                    logger.info("DevInfo write to ${outFile.canonicalPath}")
+                                }
+                            }.getOrElse { e ->
+                                logger.error("Write devInfo failed: {}", e.localizedMessage)
+                                if (!logger.isDebugEnabled) {
+                                    logger.error("Enable debug log for more information.")
+                                }
+                                logger.debug("Write devInfo failed.", e)
                             }
-                            FileWriter(outFile).use { w ->
-                                w.write(devInfoJson)
-                                logger.info("DevInfo write to ${outFile.canonicalPath}")
-                            }
-                        }.getOrElse { e ->
-                            logger.error("Write devInfo failed: {}", e.localizedMessage)
-                            if (!logger.isDebugEnabled) {
-                                logger.error("Enable debug log for more information.")
-                            }
-                            logger.debug("Write devInfo failed.", e)
                         }
                     }
-                    
-                    
-                    devInfo
                 }
             }
         }
@@ -239,6 +237,7 @@ public class MiraiConfiguration {
     }
 }
 
+@Deprecated("Unused")
 internal fun simbotMiraiDeviceInfo(c: Long, s: Long): DeviceInfo {
     val r = Random(c * s)
     return DeviceInfo(
