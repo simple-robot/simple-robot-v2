@@ -78,13 +78,13 @@ public abstract class MiraiMessageContent : MessageContent {
 public data class MiraiListMessageContent(val list: List<MiraiMessageContent>) : MiraiMessageContent() {
     override suspend fun getMessage(contact: Contact): Message {
         return when {
-            list.isEmpty() -> EmptyMessageChain
+            list.isEmpty() -> emptyMessageChain()
             list.size == 1 -> list[0].getMessage(contact)
             list.size == 2 -> list.first().getMessage(contact) + list.last().getMessage(contact)
             else -> list.map { it.getMessage(contact) }
                 .asSequence()
                 .filter { it.isNotEmptyMsg() }
-                .reduceOrNull { m1, m2 -> m1 + m2 } ?: EmptyMessageChain
+                .reduceOrNull { m1, m2 -> m1 + m2 } ?: emptyMessageChain()
         }
 
     }
@@ -392,10 +392,9 @@ constructor(
 @Deprecated("Use MiraiAudioMessageContent", replaceWith = ReplaceWith("MiraiAudioMessageContent"))
 public class MiraiVoiceMessageContent(
     override val neko: Neko,
-    @Suppress("DEPRECATION") private val voiceFunction: suspend (Contact) -> Audio,
+    private val voiceFunction: suspend (Contact) -> Audio,
 ) : MiraiMessageContent(), NekoAble {
 
-    @Suppress("DEPRECATION")
     @Volatile
     private lateinit var voice: Audio
 

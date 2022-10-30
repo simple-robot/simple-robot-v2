@@ -23,7 +23,7 @@ import love.forte.simbot.api.message.results.Result
 /**
  * [Sender] 的 无效化实现，所有的方法均会抛出异常。
  */
-@Suppress("DEPRECATION", "OverridingDeprecatedMember")
+@Suppress("OverridingDeprecatedMember")
 object ErrorSender : Sender.Def {
     override suspend fun groupMsg(
         parent: String?,
@@ -45,6 +45,7 @@ object ErrorSender : Sender.Def {
     ): Nothing =
         NO("Sender.sendGroupNotice")
 
+    @Deprecated("此方法未来将会被从标注接口中移除，且从2.3.0后、移除之前不会在进行维护。")
     override fun sendGroupSign(group: String, title: String, message: String): Nothing =
         NO("Sender.sendGroupSign")
 
