@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * simbot配置文件对应实例。实际上没有被使用到，仅用作提供springboot的配置文件快捷提醒。
- *
+ * <p>
  * 真正使用到的配置类为 {@link love.forte.simbot.component.mirai.configuration.MiraiConfiguration}
  *
  * @author <a href="https://github.com/ForteScarlet"> ForteScarlet </a>
@@ -93,5 +93,11 @@ public class SimbotCompMiraiConfigurationProperties {
     /**
      * mirai设备信息文件路径。
      */
-    private String deviceInfoFile = "";
+    private String deviceInfoFile = "device.json";
+
+    /**
+     * 如果为true，则通过 {@link #deviceInfoFile} 的值进行基于文件的随机设备信息配置。
+     * 默认为true
+     */
+    private boolean deviceInfoFileBased = true;
 }

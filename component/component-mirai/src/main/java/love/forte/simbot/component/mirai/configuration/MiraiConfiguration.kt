@@ -16,7 +16,6 @@
 package love.forte.simbot.component.mirai.configuration
 
 import cn.hutool.crypto.SecureUtil
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import love.forte.common.configuration.annotation.ConfigInject
@@ -52,16 +51,16 @@ public fun miraiBotLogger(botCode: Long, type: String? = null): Logger {
 @Beans("miraiConfiguration")
 @AsMiraiConfig
 public class MiraiConfiguration {
-
+    
     private companion object : TypedCompLogger(MiraiConfiguration::class.java)
-
+    
     /**
      * mirai心跳周期. 过长会导致被服务器断开连接. 单位毫秒
      * @see BotConfiguration.heartbeatPeriodMillis
      */
     @field:ConfigInject
     var heartbeatPeriodMillis: Long = BotConfiguration.Default.heartbeatPeriodMillis
-
+    
     /**
      * 每次心跳时等待结果的时间.
      * 一旦心跳超时, 整个网络服务将会重启 (将消耗约 1s). 除正在进行的任务 (如图片上传) 会被中断外, 事件和插件均不受影响.
@@ -69,118 +68,130 @@ public class MiraiConfiguration {
      */
     @field:ConfigInject
     var heartbeatTimeoutMillis: Long = BotConfiguration.Default.heartbeatTimeoutMillis
-
+    
     /**
      * mirai 心跳策略.
      */
     @field:ConfigInject
     var heartbeatStrategy: BotConfiguration.HeartbeatStrategy = BotConfiguration.Default.heartbeatStrategy
-
-
+    
+    
     /** 最多尝试多少次重连 */
     @field:ConfigInject
     var reconnectionRetryTimes: Int = BotConfiguration.Default.reconnectionRetryTimes
-
-
+    
+    
     /**
      * 使用协议类型。
      * 默认使用 [安卓手机协议][BotConfiguration.MiraiProtocol.ANDROID_PHONE]。
      */
     @field:ConfigInject
     var protocol: BotConfiguration.MiraiProtocol = BotConfiguration.Default.protocol
-
+    
     /** 关闭mirai的bot logger */
     @field:ConfigInject
     var noBotLog: Boolean = false
-
+    
     /** 关闭mirai网络日志 */
     @field:ConfigInject
     var noNetworkLog: Boolean = false
-
+    
     /** mirai bot log切换使用simbot的log（slf4j-api） */
     @field:ConfigInject
     var useSimbotBotLog: Boolean = true
-
+    
     /** mirai 网络log 切换使用simbot的log（slf4j-api） */
     @field:ConfigInject
     var useSimbotNetworkLog: Boolean = true
-
+    
     /** mirai配置自定义deviceInfoSeed的时候使用的随机种子。默认为1.  */
     @field:ConfigInject
     var deviceInfoSeed: Long = 1L
-
-
+    
+    
     @field:ConfigInject
-    var deviceInfoFile: String? = ""
-
+    var deviceInfoFile: String? = "device.json"
+    
+    /**
+     * 如果为true，则通过 [deviceInfoFile] 的值进行基于文件的随机设备信息配置。
+     */
+    @field:ConfigInject
+    var deviceInfoFileBased: Boolean = true
+    
     /**
      *  是否输出设备信息
      */
     @field:ConfigInject
     var deviceInfoOutput: Boolean = false
-
+    
     /**
      * @see BotConfiguration.highwayUploadCoroutineCount
      */
     @field:ConfigInject
     var highwayUploadCoroutineCount: Int = BotConfiguration.Default.highwayUploadCoroutineCount
-
+    
     private val json = Json {
         isLenient = true
         ignoreUnknownKeys = true
         prettyPrint = true
     }
-
+    
     /**
      * mirai官方配置类获取函数，默认为其默认值
      * */
     // @set:Deprecated("use setPostBotConfigurationProcessor((code, conf) -> {...})")
-
-    @OptIn(ExperimentalSerializationApi::class)
+    
     val botConfiguration: (String) -> BotConfiguration = {
         val conf = BotConfiguration()
-
-        deviceInfoFile.takeIf { it?.isNotBlank() == true }?.runCatching {
-            logger.info("Try to use device info file: $this")
-            val jsonReader = ResourceUtil.getResourceUtf8Reader(this)
-            val json = jsonReader.use { it.readText() }
-            conf.loadDeviceInfoJson(json)
-        }?.getOrElse { e ->
-            logger.error("Load device Info json file: $deviceInfoFile failed. get device by simbot default.", e)
-            null
-        } ?: run {
-            conf.deviceInfo = {
-                val devInfo = simbotMiraiDeviceInfo(it.id, deviceInfoSeed)
-
-                if (deviceInfoOutput) {
-                    runCatching<Unit> {
-                        val devInfoJson = json.encodeToString(devInfo)
-                        val outFile = File("simbot-devInfo.json")
-                        if (!outFile.exists()) {
-                            outFile.apply {
-                                parentFile?.mkdirs()
-                                createNewFile()
+        
+        if (deviceInfoFileBased) {
+            conf.fileBasedDeviceInfo(deviceInfoFile?.takeIf { it.isNotEmpty() } ?: "device.json")
+        } else {
+            deviceInfoFile.takeIf { it?.isNotBlank() == true }?.runCatching {
+                logger.info("Try to use device info file: $this")
+                val jsonReader = ResourceUtil.getResourceUtf8Reader(this)
+                val json = jsonReader.use { it.readText() }
+                conf.loadDeviceInfoJson(json)
+            }?.getOrElse { e ->
+                logger.error("Load device info json file: $deviceInfoFile failed. get device via mirai random.", e)
+                null
+            } ?: run {
+                // conf.fileBasedDeviceInfo(deviceInfoFile ?: "device.json")
+                conf.deviceInfo = {
+                    conf.deviceInfo = { DeviceInfo.random() }
+                    val devInfo = simbotMiraiDeviceInfo(it.id, deviceInfoSeed)
+                    
+                    if (deviceInfoOutput) {
+                        runCatching<Unit> {
+                            val devInfoJson = json.encodeToString(devInfo)
+                            val outFile = File("simbot-devInfo.json")
+                            if (!outFile.exists()) {
+                                outFile.apply {
+                                    parentFile?.mkdirs()
+                                    createNewFile()
+                                }
                             }
+                            FileWriter(outFile).use { w ->
+                                w.write(devInfoJson)
+                                logger.info("DevInfo write to ${outFile.canonicalPath}")
+                            }
+                        }.getOrElse { e ->
+                            logger.error("Write devInfo failed: {}", e.localizedMessage)
+                            if (!logger.isDebugEnabled) {
+                                logger.error("Enable debug log for more information.")
+                            }
+                            logger.debug("Write devInfo failed.", e)
                         }
-                        FileWriter(outFile).use { w ->
-                            w.write(devInfoJson)
-                            logger.info("DevInfo write to ${outFile.canonicalPath}")
-                        }
-                    }.getOrElse { e ->
-                        logger.error("Write devInfo failed: {}", e.localizedMessage)
-                        if (!logger.isDebugEnabled) {
-                            logger.error("Enable debug log for more information.")
-                        }
-                        logger.debug("Write devInfo failed.", e)
                     }
+                    
+                    
+                    devInfo
                 }
-
-
-                devInfo
             }
         }
-
-
+        
+        
+        
         conf.heartbeatPeriodMillis = this.heartbeatPeriodMillis
         conf.heartbeatTimeoutMillis = this.heartbeatTimeoutMillis
         // conf.firstReconnectDelayMillis = this.firstReconnectDelayMillis
@@ -188,8 +199,8 @@ public class MiraiConfiguration {
         conf.reconnectionRetryTimes = this.reconnectionRetryTimes
         conf.protocol = this.protocol
         conf.highwayUploadCoroutineCount = highwayUploadCoroutineCount
-
-
+        
+        
         if (noBotLog) {
             conf.noBotLog()
         }
@@ -223,11 +234,10 @@ public class MiraiConfiguration {
                 if (logger is MiraiLoggerWithSwitch) logger else logger.withSwitch(true)
             }
         }
-
+        
         conf
     }
 }
-
 
 internal fun simbotMiraiDeviceInfo(c: Long, s: Long): DeviceInfo {
     val r = Random(c * s)
@@ -241,9 +251,11 @@ internal fun simbotMiraiDeviceInfo(c: Long, s: Long): DeviceInfo {
         bootloader = "unknown".toByteArray(),
         // mamoe/mirai/mirai:10/MIRAI.200122.001/
         fingerprint = "mamoe/mirai/mirai:10/MIRAI.200122.001/${
-            getRandomString(7,
+            getRandomString(
+                7,
                 '0'..'9',
-                r)
+                r
+            )
         }:user/release-keys".toByteArray(),
         bootId = generateUUID(SecureUtil.md5().digest(getRandomByteArray(16, r))).toByteArray(),
         procVersion = "Linux version 3.0.31-${getRandomString(8, r)} (android-build@xxx.xxx.xxx.xxx.com)".toByteArray(),
@@ -257,7 +269,7 @@ internal fun simbotMiraiDeviceInfo(c: Long, s: Long): DeviceInfo {
         imsiMd5 = SecureUtil.md5().digest(getRandomByteArray(16, r)),
         imei = getRandomString(15, '0'..'9', r),
         apn = "wifi".toByteArray()
-
+    
     )
 }
 
