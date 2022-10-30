@@ -50,7 +50,8 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.concurrent.thread
 import kotlin.io.path.*
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 
 
@@ -478,7 +479,6 @@ protected constructor(
         ): SimbotContext {
 
             // 资源配置数据，获取appType的注解。
-            @Suppress("UNCHECKED_CAST")
             val resourceData: List<SimbotResourceData> =
                 AnnotationUtil.getAnnotation(appType, SimbotApplication::class.java)?.value
                     ?.map {
@@ -661,7 +661,7 @@ private class Tips {
             }
 
             val lastMod = local.getLastModifiedTime().toMillis()
-            if (Duration.milliseconds(System.currentTimeMillis() - lastMod) > Duration.days(7)) {
+            if ((System.currentTimeMillis() - lastMod).milliseconds > 7.days) {
                 local.deleteIfExists()
             }
 
