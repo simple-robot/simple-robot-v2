@@ -25,8 +25,8 @@ import love.forte.simbot.thing.resolveValue
  */
 public interface AuthInfo : Result {
 
-    @Deprecated("Use property 'auths'.")
-    val cookies: Cookies
+    @Deprecated("Use property 'auths'.", ReplaceWith("auths"))
+    val cookies: Cookies get() = auths.asCookies()
 
     /**
      * 得到权限信息。不保证其内部存在信息。
@@ -99,8 +99,6 @@ public fun emptyAuthInfo(): AuthInfo = EmptyAuthInfo
  * 空值实现。
  */
 private object EmptyAuthInfo : AuthInfo {
-    override val cookies: AuthInfo.Cookies
-        get() = EmptyCookie
     override val auths: AuthInfo.Auths
         get() = EmptyAuth
     override val token: String?

@@ -42,6 +42,7 @@ internal object EmptyFilterParameterMatcher : FilterParameterMatcher {
     override fun getPattern(): Pattern = EmptyRegex.toPattern()
     override fun matches(text: String?): Boolean = false
     override fun getParam(name: String?, text: String?): String? = null
+    @Deprecated("Deprecated in Java", ReplaceWith("emptyMap()"))
     override fun getParams(text: String?): Map<String, String> = emptyMap()
     override fun getParameters(text: String?): FilterParameters = EmptyFilterParameters
 }

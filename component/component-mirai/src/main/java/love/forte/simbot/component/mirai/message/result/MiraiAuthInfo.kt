@@ -15,7 +15,6 @@
 package love.forte.simbot.component.mirai.message.result
 
 import love.forte.simbot.api.message.results.AuthInfo
-import love.forte.simbot.api.message.results.asCookies
 import love.forte.simbot.component.mirai.sender.Cookies
 import love.forte.simbot.thing.StructuralThingWithName
 
@@ -28,9 +27,6 @@ open class MiraiAuthInfo(private val _cookies: Cookies) : AuthInfo {
     lazy(LazyThreadSafetyMode.PUBLICATION) {
         _cookies.toCookiesMap()
     }
-
-    /** cookies信息。 */
-    override val cookies: AuthInfo.Cookies get() = auths.asCookies()
 
     override val auths: AuthInfo.Auths by lazy(LazyThreadSafetyMode.PUBLICATION) {
         MiraiAuthInfoCookies()

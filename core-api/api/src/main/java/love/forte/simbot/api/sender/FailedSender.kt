@@ -46,8 +46,6 @@ public object FailedSender : Sender.Def {
         toNewMember: Boolean,
         confirm: Boolean,
     ): Carrier<Boolean> = FalseCarrier
-
-    override fun sendGroupSign(group: String, title: String, message: String): Carrier<Boolean> = FalseCarrier
 }
 
 

@@ -58,7 +58,4 @@ public object WarnSender : LogAble, Sender.Def {
         toNewMember: Boolean,
         confirm: Boolean,
     ): Carrier<Boolean> = apiWarn("sendGroupNotice") { null }.let { Carrier.empty() }
-
-    override fun sendGroupSign(group: String, title: String, message: String): Carrier<Boolean> =
-        apiWarn("sendGroupSign") { null }.let { Carrier.empty() }
 }

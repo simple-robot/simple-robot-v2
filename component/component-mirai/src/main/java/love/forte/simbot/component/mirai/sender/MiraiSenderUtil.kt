@@ -17,9 +17,9 @@ package love.forte.simbot.component.mirai.sender
 import love.forte.simbot.component.mirai.message.EmptySingleMessage
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.contact.Member
-import net.mamoe.mirai.message.data.EmptyMessageChain
 import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.MessageChain
+import net.mamoe.mirai.message.data.emptyMessageChain
 
 /**
  * 获取某个群的群员。
@@ -41,7 +41,7 @@ internal inline fun Bot.getGroupMemberOrNull(groupCode: Long, memberCode: Long):
  */
 internal fun Message.isNotEmptyMsg(): Boolean =
             this !== EmptySingleMessage &&
-            this !== EmptyMessageChain &&
+            this !== emptyMessageChain() &&
             if (this is MessageChain) this.isNotEmpty() else true
 
 
